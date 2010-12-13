@@ -273,13 +273,13 @@ function reboot () {
 #Rebuild server with a new image.
 # REQUIRES: 1=AuthToken 2=RS_Management_Server 3=Server_ID_To_Be_Rebuilt 4=Image_ID_to_put_server
 function rebuild () {
-	RSPOST="{\"rebuild\":{\"imageId\":$4}}"
+	RSPOST="{\"rebuild\":{\"imageId\":$RSIMAGEID}}"
 	http_code_eval `curl -s -X POST -D - -H X-Auth-Token:\ $1 -H Content-Type:\ application/json --data $RSPOST $2/servers/$3/action|tr -s [:cntrl:] "\n"|grep "HTTP/1.1"|awk '{print $2}' `
 }
 #Resize server
 # REQUIRES: 1=AuthToken 2=RS_Management_Server 3=Server_ID_To_Be_Resized 
 function resize () {
-	RSPOST="{\"resize\":{\"flavorId\":$4}}"
+	RSPOST="{\"resize\":{\"flavorId\":$RSFLAVORID}}"
 	http_code_eval `curl -s -X POST -D - -H X-Auth-Token:\ $1 -H Content-Type:\ application/json --data $RSPOST $2/servers/$3/action|tr -s [:cntrl:] "\n"|grep "HTTP/1.1"|awk '{print $2}' `
 }
 #Confirms that a server resize has worked
