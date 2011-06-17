@@ -38,7 +38,8 @@
 #	-s Server ID, required for some commands. To see the servers run list-servers.
 #	-i Image ID, required for some commands. To see the images run list-images.
 #	-f Flavor ID, required for some commands.  To see the flavors run list-flavors.
-#	-n Name of server(required) or image(optional) when creating them.  
+#	-n Name of server(required) or image(optional) when creating them.
+#	-k Use the UK rackspace
 #	-q Quiet mode, all commands except list-* will exit quietly
 #	-h show this menu
 #
@@ -82,6 +83,7 @@ function usage () {
 	printf "\t-i Image ID, required for some commands. To see the images run list-images.\n"
 	printf "\t-f Flavor ID, required for some commands.  To see the flavors run list-flavors.\n"
 	printf "\t-n Name of server(required) or image(optional) when creating them.\n"
+	printf "\t-k Use the UK rackspace. (optional)\n"
 	printf "\t-q Quiet mode, all commands except list-* will exit quietly\n"
 	printf "\t-h Show this menu.\n"
 	printf "\n"
@@ -89,7 +91,12 @@ function usage () {
 #Authenticates to the Rackspace Service and sets up the Authentication Token and Managment server
 #REQUIRES: 1=AuthUser 2=API_Key
 function get_auth () {
-	AUTH=`curl -s -X GET -D - -H X-Auth-User:\ $1 -H X-Auth-Key:\ $2 https://auth.api.rackspacecloud.com/v1.0|tr -s [:cntrl:] "\n" \
+	if [[ $UKAUTH -eq 1 ]]; then
+		AUTHSVR="https://lon.auth.api.rackspacecloud.com/v1.0"
+	else
+		AUTHSVR="https://auth.api.rackspacecloud.com/v1.0"
+	fi
+	AUTH=`curl -s -X GET -D - -H X-Auth-User:\ $1 -H X-Auth-Key:\ $2 $AUTHSVR|tr -s [:cntrl:] "\n" \
 		|awk '{ if ($1 == "HTTP/1.1") printf "%s,", $2 ; if ($1 == "X-Auth-Token:") printf "%s,", $2 ; if ($1 == "X-Server-Management-Url:") printf "%s,", $2 ;}' `
 	EC=`echo $AUTH|awk -F, '{print $1}'`
 	if [[ $EC == "204" ]]; then
@@ -324,6 +331,7 @@ function http_code_eval () {
 }
 #Variables
 QUIET=0
+UKAUTH=0
 #Check for enough variables, print usage if not enough.
 if [ $# -lt 6 ]
 	then
@@ -331,7 +339,7 @@ if [ $# -lt 6 ]
 	exit 1
 fi
 #Get options from the command line.
-while getopts "u:a:c:s:n:i:f:hq" option
+while getopts "u:a:c:s:n:i:f:hqk" option
 do
 	case $option in
 		u	) RSUSER=$OPTARG ;;
@@ -343,6 +351,7 @@ do
 		f	) RSFLAVORID=$OPTARG ;;
 		h	) usage;exit 0 ;;
 		q	) QUIET=1 ;;
+		k	) UKAUTH=1 ;;
 	esac
 done
 #All actions require authentication, get it done first.
