@@ -215,7 +215,12 @@ function print_servers () {
 	print_server_header
 	get_images $TOKEN $MGMTSVR
 	get_flavors $TOKEN $MGMTSVR
-	get_servers $TOKEN $MGMTSVR
+    # if we pass in a server ID then query just that single server - cut down on the API calls to RS
+    if [ -z $1 ]; then
+        get_servers $TOKEN $MGMTSVR
+    else
+        SERVERS="$1,"
+    fi
 	if [[ `echo $SERVERS|grep ,|wc -l` -eq 0 ]]
 		then
 		exit 0
@@ -251,7 +256,13 @@ function print_flavors () {
 #Prints a formatted list of the server images.
 function print_images () {
 	print_image_header 
-	get_images $TOKEN $MGMTSVR
+    # if we pass an image ID in then just scan for that, otherwise list them all.  This cuts down on
+    # the API calls that we send to RS.
+    if [ -z $1 ]; then
+    	get_images $TOKEN $MGMTSVR
+    else
+        IMAGES="$1,"
+    fi
 	#echo $IMAGES|awk -F, 'BEGIN { RS = ";" } ; {printf "%-10s %-40s\n", $1, $2}'
 	for i in `echo $IMAGES|awk -F, 'BEGIN { RS = ";" } ; {print $1}'`
 	do 
@@ -364,9 +375,9 @@ if test -z $MGMTSVR
 fi
 #Evaluate which command we were asked to do.
 case $MYCOMMAND in
-	list-servers	) print_servers ;;
+	list-servers	) print_servers $RSSERVID ;;
 	list-flavors	) print_flavors ;;
-	list-images		) print_images ;;
+	list-images		) print_images $RSIMAGEID ;;
 	list-backups	) print_backups ;;
 	delete-server	) 
 		if test -z $RSSERVID
