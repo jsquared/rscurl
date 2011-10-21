@@ -125,8 +125,8 @@ function create_server () {
 			if [[ $QUIET -eq 1 ]]; then
 				exit 0;
 			fi
-			printf "%-7s%-10s%-50s%-50s%-20s%-20s\n" ID Status Server\ Name Admin\ Password Public\ IP Private\ IP
-			echo ------ --------- ------------------------------------------------- ------------------------------------------------- ------------------- ------------------- 
+			printf "%-10s%-10s%-50s%-50s%-20s%-20s\n" ID Status Server\ Name Admin\ Password Public\ IP Private\ IP
+			echo --------- --------- ------------------------------------------------- ------------------------------------------------- ------------------- ------------------- 
 			echo $RC|sed -e 's/{"server":{//' -e 's/}}//' -e 's/"addresses":{//' \
 		    |awk -F]} '{ printf "%s]\n", $1 }'|awk -F: 'BEGIN { RS = "," } ; { printf "%s,", $2 }' \
 			|awk -F, '{printf "%-7s%-10s%-50s%-50s%-20s%-20s\n", $2, $5, $7, $6, $9, $10}'
@@ -197,12 +197,12 @@ function get_backups () {
 }
 #Prints the header for the server list.
 function print_server_header () {
-	printf "%-7s%-40s%-20s%-10s%-50s%-20s%-20s\n" ID Server\ Image Server\ Flavor Status Server\ Name Public\ IP Private\ IP
-	echo ------ --------------------------------------- ------------------- --------- ------------------------------------------------- ------------------- ------------------- 
+	printf "%-10s%-40s%-20s%-10s%-50s%-20s%-20s\n" ID Server\ Image Server\ Flavor Status Server\ Name Public\ IP Private\ IP
+	echo --------- --------------------------------------- ------------------- --------- ------------------------------------------------- ------------------- ------------------- 
 }
 #Prints the header for the flavor list.
 function print_flavor_header () {
-	printf "%-6s%-9s%-9s%s\n" ID RAM\(M\) Disk\(G\) Flavor\ Name
+	printf "%-10s%-9s%-9s%s\n" ID RAM\(M\) Disk\(G\) Flavor\ Name
 	echo ----- -------- -------- ---------- 
 }
 #Prints the header for the image list.
@@ -236,7 +236,7 @@ function print_servers () {
 		flvid=`echo $MYSERVER|awk -F, '{print $4}'`
 		MYFLAVOR=`echo $FLAVORS|awk -F, 'BEGIN { RS = ";" } ; { printf "X%s,%s\n" , $1, $2; }' \
 		    |grep X$flvid|awk -F, '{print $2}'|sed 's/\ /-/g'`
-		echo $MYSERVER|awk -F, '{printf "%-7s", $2}'
+		echo $MYSERVER|awk -F, '{printf "%-10s", $2}'
 		printf "%-40s%-20s" $MYIMAGE $MYFLAVOR
 		echo $MYSERVER|awk -F, '{printf "%-10s%-50s%-20s%-20s\n", $5, $6, $8, $9}'
 	done
