@@ -336,7 +336,7 @@ function http_code_eval () {
 #Variables
 QUIET=0
 #Check for enough variables, print usage if not enough.
-if [ $# -lt 6 ]
+if [ $# -lt 2 ]
 	then
 	usage
 	exit 1
@@ -356,6 +356,11 @@ do
 		q	) QUIET=1 ;;
 	esac
 done
+if [ -z $RSUSER -o -z $RSAPIKEY ]; then
+    echo "User or API not present!"
+    usage
+    exit 1
+fi
 #All actions require authentication, get it done first.
 #If the authentication works this will return $TOKEN and $MGMTSVR for use by everything else.
 get_auth $RSUSER $RSAPIKEY
