@@ -125,8 +125,8 @@ function create_server () {
 			if [[ $QUIET -eq 1 ]]; then
 				exit 0;
 			fi
-			printf "%-7s%-10s%-50s%-50s%-20s%-20s\n" ID Status Server\ Name Admin\ Password Public\ IP Private\ IP
-			echo ------ --------- ------------------------------------------------- ------------------------------------------------- ------------------- ------------------- 
+			printf "%-10s%-10s%-50s%-50s%-20s%-20s\n" ID Status Server\ Name Admin\ Password Public\ IP Private\ IP
+			echo --------- --------- ------------------------------------------------- ------------------------------------------------- ------------------- ------------------- 
 			echo $RC|sed -e 's/{"server":{//' -e 's/}}//' -e 's/"addresses":{//' \
 		    |awk -F]} '{ printf "%s]\n", $1 }'|awk -F: 'BEGIN { RS = "," } ; { printf "%s,", $2 }' \
 			|awk -F, '{printf "%-7s%-10s%-50s%-50s%-20s%-20s\n", $2, $5, $7, $6, $9, $10}'
@@ -197,12 +197,12 @@ function get_backups () {
 }
 #Prints the header for the server list.
 function print_server_header () {
-	printf "%-7s%-40s%-20s%-10s%-50s%-20s%-20s\n" ID Server\ Image Server\ Flavor Status Server\ Name Public\ IP Private\ IP
-	echo ------ --------------------------------------- ------------------- --------- ------------------------------------------------- ------------------- ------------------- 
+	printf "%-10s%-40s%-20s%-10s%-50s%-20s%-20s\n" ID Server\ Image Server\ Flavor Status Server\ Name Public\ IP Private\ IP
+	echo --------- --------------------------------------- ------------------- --------- ------------------------------------------------- ------------------- ------------------- 
 }
 #Prints the header for the flavor list.
 function print_flavor_header () {
-	printf "%-6s%-9s%-9s%s\n" ID RAM\(M\) Disk\(G\) Flavor\ Name
+	printf "%-10s%-9s%-9s%s\n" ID RAM\(M\) Disk\(G\) Flavor\ Name
 	echo ----- -------- -------- ---------- 
 }
 #Prints the header for the image list.
@@ -215,7 +215,12 @@ function print_servers () {
 	print_server_header
 	get_images $TOKEN $MGMTSVR
 	get_flavors $TOKEN $MGMTSVR
-	get_servers $TOKEN $MGMTSVR
+    # if we pass in a server ID then query just that single server - cut down on the API calls to RS
+    if [ -z $1 ]; then
+        get_servers $TOKEN $MGMTSVR
+    else
+        SERVERS="$1,"
+    fi
 	if [[ `echo $SERVERS|grep ,|wc -l` -eq 0 ]]
 		then
 		exit 0
@@ -231,7 +236,7 @@ function print_servers () {
 		flvid=`echo $MYSERVER|awk -F, '{print $4}'`
 		MYFLAVOR=`echo $FLAVORS|awk -F, 'BEGIN { RS = ";" } ; { printf "X%s,%s\n" , $1, $2; }' \
 		    |grep X$flvid|awk -F, '{print $2}'|sed 's/\ /-/g'`
-		echo $MYSERVER|awk -F, '{printf "%-7s", $2}'
+		echo $MYSERVER|awk -F, '{printf "%-10s", $2}'
 		printf "%-40s%-20s" $MYIMAGE $MYFLAVOR
 		echo $MYSERVER|awk -F, '{printf "%-10s%-50s%-20s%-20s\n", $5, $6, $8, $9}'
 	done
@@ -251,7 +256,13 @@ function print_flavors () {
 #Prints a formatted list of the server images.
 function print_images () {
 	print_image_header 
-	get_images $TOKEN $MGMTSVR
+    # if we pass an image ID in then just scan for that, otherwise list them all.  This cuts down on
+    # the API calls that we send to RS.
+    if [ -z $1 ]; then
+    	get_images $TOKEN $MGMTSVR
+    else
+        IMAGES="$1,"
+    fi
 	#echo $IMAGES|awk -F, 'BEGIN { RS = ";" } ; {printf "%-10s %-40s\n", $1, $2}'
 	for i in `echo $IMAGES|awk -F, 'BEGIN { RS = ";" } ; {print $1}'`
 	do 
@@ -325,7 +336,7 @@ function http_code_eval () {
 #Variables
 QUIET=0
 #Check for enough variables, print usage if not enough.
-if [ $# -lt 6 ]
+if [ $# -lt 2 ]
 	then
 	usage
 	exit 1
@@ -345,6 +356,11 @@ do
 		q	) QUIET=1 ;;
 	esac
 done
+if [ -z $RSUSER -o -z $RSAPIKEY ]; then
+    echo "User or API not present!"
+    usage
+    exit 1
+fi
 #All actions require authentication, get it done first.
 #If the authentication works this will return $TOKEN and $MGMTSVR for use by everything else.
 get_auth $RSUSER $RSAPIKEY
@@ -364,9 +380,9 @@ if test -z $MGMTSVR
 fi
 #Evaluate which command we were asked to do.
 case $MYCOMMAND in
-	list-servers	) print_servers ;;
+	list-servers	) print_servers $RSSERVID ;;
 	list-flavors	) print_flavors ;;
-	list-images		) print_images ;;
+	list-images		) print_images $RSIMAGEID ;;
 	list-backups	) print_backups ;;
 	delete-server	) 
 		if test -z $RSSERVID
